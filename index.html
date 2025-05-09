@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Draft Oracle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      background: linear-gradient(145deg, #0c0c0c, #1d1d1d);
+      color: #fff;
+    }
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: #111;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #ffd700;
+      text-shadow: 2px 2px 4px #000;
+    }
+    label, input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    input {
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      padding: 12px;
+      font-size: 1.1em;
+      background: #ffd700;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #ffcc00;
+    }
+    .position-options, .keyword-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .position-options button, .keyword-options button {
+      width: auto;
+      padding: 10px 20px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 6px;
+    }
+    .position-options button:hover, .keyword-options button:hover {
+      background: #555;
+    }
+    .draft-result {
+      background: #000;
+      border: 2px solid #ffd700;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .draft-result h2 {
+      color: #ff3;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    .draft-result p {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="page1">
+    <h1>🏀NBA Draft Oracle🏀</h1>
+    <label for="name">Name</label>
+    <input type="text" id="name" placeholder="Enter your name">
+
+    <label for="birth">Birthday</label>
+    <input type="date" id="birth">
+
+    <label for="height">Height</label>
+    <input type="text" id="height" placeholder="6-3">
+
+    <label for="college">College</label>
+    <input type="text" id="college" placeholder="UCLA">
+
+    <label for="country">Country</label>
+    <input type="text" id="country" placeholder="USA">
+
+    <button onclick="goToPage2()">Continue</button>
+  </div>
+
+  <div class="container" id="page2" style="display: none;">
+    <h2>Choose Your Position</h2>
+    <div class="position-options">
+      <button onclick="selectPosition('PG')">Point Guard</button>
+      <button onclick="selectPosition('SG')">Shooting Guard</button>
+      <button onclick="selectPosition('SF')">Small Forward</button>
+      <button onclick="selectPosition('PF')">Power Forward</button>
+      <button onclick="selectPosition('C')">Center</button>
+    </div>
+    <div class="keyword-options" id="keywords"></div>
+  </div>
+
+  <div class="container draft-result" id="result" style="display: none;"></div>
+
+  <script>
+    const API_KEY = "29be7728-5ad4-498f-8c05-44c260fb5452";
+
+    const playerMap = {
+      PG: {
+        "Three Points": { id: 192, name: "Stephen Curry", team: "Golden State Warriors" },
+        "Dribble": { id: 375, name: "Kyrie Irving", team: "Dallas Mavericks" },
+        "Assist": { id: 132, name: "Luka Doncic", team: "Dallas Mavericks" }
+      },
+      SG: {
+        "Jump Shot": { id: 666786, name: "DeMar DeRozan", team: "Sacramento Kings" },
+        "Three Point": { id: 447, name: "Klay Thompson", team: "Golden State Warriors" },
+        "Iso": { id: 666784, name: "James Harden", team: "LA Clippers" }
+      },
+      SF: {
+        "Defence": { id: 274, name: "Kawhi Leonard", team: "LA Clippers" },
+        "Jump Shot": { id: 140, name: "Kevin Durant", team: "Phoenix Suns" },
+        "Three Point": { id: 666785, name: "Jayson Tatum", team: "Boston Celtics" }
+      },
+      PF: {
+        "Paint Scoring": { id: 15, name: "Giannis Antetokounmpo", team: "Milwaukee Bucks" },
+        "All-around": { id: 237, name: "LeBron James", team: "LA Lakers" },
+        "Defence": { id: 336, name: "Anthony Davis", team: "LA Lakers" }
+      },
+      C: {
+        "Assist": { id: 246, name: "Nikola Jokic", team: "Denver Nuggets" },
+        "Shooting": { id: 79, name: "Karl-Anthony Towns", team: "Minnesota Timberwolves" },
+        "Paint Scoring": { id: 117, name: "Shaquille O'Neal", team: "LA Lakers" }
+      }
+    };
+
+    let userData = {};
+
+    function goToPage2() {
+      const name = document.getElementById("name").value;
+      const birth = document.getElementById("birth").value;
+      const height = document.getElementById("height").value;
+      const college = document.getElementById("college").value;
+      const country = document.getElementById("country").value;
+
+      if (!name || !birth || !height || !college || !country) {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      userData = { name, birth, height, college, country };
+      document.getElementById("page1").style.display = "none";
+      document.getElementById("page2").style.display = "block";
+    }
+
+    function selectPosition(pos) {
+      const keywordsDiv = document.getElementById("keywords");
+      keywordsDiv.innerHTML = "<h3>Select Your Play Style</h3>";
+      Object.keys(playerMap[pos]).forEach(keyword => {
+        const btn = document.createElement("button");
+        btn.textContent = keyword;
+        btn.onclick = () => showResult(pos, keyword);
+        keywordsDiv.appendChild(btn);
+      });
+    }
+
+    function showResult(pos, keyword) {
+      const player = playerMap[pos][keyword];
+      const draftYear = new Date(userData.birth).getFullYear() + 19;
+      const resultDiv = document.getElementById("result");
+      document.getElementById("page2").style.display = "none";
+      resultDiv.style.display = "block";
+
+      fetch(`https://api.balldontlie.io/v1/players?player_ids[]=${player.id}`, {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const p = data.data[0];
+          const fullName = `${p.first_name} ${p.last_name}`;
+          const position = p.position || pos;
+          const team = p.team?.full_name || player.team;
+          const college = p.college || "N/A";
+          const country = p.country || "N/A";
+
+          resultDiv.innerHTML = `
+            <h2>With the ${draftYear - 2000}th pick in the ${draftYear} NBA Draft...</h2>
+            <p>The team <strong>${team}</strong> selects <strong>${userData.name}</strong>, a ${userData.height} tall <strong>${pos}</strong> from ${userData.college}, originally from ${userData.country}.</p>
+            <hr />
+            <p>Your NBA template is: <strong>${fullName}</strong></p>
+            <p>Position: ${position} | College: ${college} | Country: ${country}</p>
+            <p>Play Style: <strong>${keyword}</strong></p>
+          `;
+        });
+    }
+  </script>
+</body>
+</html>
